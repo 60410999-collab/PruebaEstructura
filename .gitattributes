@@ -1,2 +1,194 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#include <iostream>
+#include <string>
+using namespace std;
+ 
+// ================== NODOS (como en la PPT S09) ==================
+struct NodoUnidad {                 // para listaUnidades y listaAtencion
+    string codigo, tipo;
+    NodoUnidad* siguiente;
+    NodoUnidad(string c, string t) { codigo = c; tipo = t; siguiente = NULL; }
+};
+ 
+struct NodoEstado {                 // para la PILA de historial
+    string estado, fecha;
+    NodoEstado* siguiente;
+    NodoEstado(string e, string f) { estado = e; fecha = f; siguiente = NULL; }
+};
+ 
+struct NodoEmergencia {             // para la COLA de pendientes
+    string tipo, ubicacion;
+    NodoEmergencia* siguiente;
+    NodoEmergencia(string t, string u) { tipo = t; ubicacion = u; siguiente = NULL; }
+};
+ 
+// ================== VARIABLES DEL SISTEMA ==================
+NodoUnidad* listaUnidades = NULL;   int totalUnidades = 0;   // unidades libres
+NodoUnidad* listaAtencion = NULL;   int totalAtencion = 0;   // unidades ocupadas
+NodoEstado* tope = NULL;            int totalEstados = 0;    // pila (maximo 100)
+NodoEmergencia* frente = NULL;
+NodoEmergencia* final = NULL;       int totalCola = 0;       // cola (maximo 5)
+ 
+// ================== FUNCIONES AUXILIARES ==================
+string leer(string mensaje) {
+    string s;
+    cout << mensaje;
+    getline(cin, s);
+    return s;
+}
+ 
+NodoUnidad* buscar(NodoUnidad* lista, string codigo) {
+    for (NodoUnidad* p = lista; p != NULL; p = p->siguiente)
+        if (p->codigo == codigo) return p;
+    return NULL;
+}
+ 
+void insertarAlFinal(NodoUnidad*& lista, NodoUnidad* nodo) {
+    nodo->siguiente = NULL;
+    if (lista == NULL) {
+        lista = nodo;
+    } else {
+        NodoUnidad* t = lista;
+        while (t->siguiente != NULL) t = t->siguiente;
+        t->siguiente = nodo;
+    }
+}
+ 
+void quitar(NodoUnidad*& lista, NodoUnidad* nodo) {
+    if (lista == nodo) {
+        lista = nodo->siguiente;
+    } else {
+        NodoUnidad* t = lista;
+        while (t->siguiente != nodo) t = t->siguiente;
+        t->siguiente = nodo->siguiente;
+    }
+}
+ 
+// ================== 1. LISTA: registrar unidad ==================
+void registrarUnidad() {
+    string codigo = leer("Codigo de la unidad: ");
+    string tipo   = leer("Tipo de unidad: ");
+    if (buscar(listaUnidades, codigo) != NULL) {
+        cout << "Unidad ya registrada\n";
+        return;
+    }
+    insertarAlFinal(listaUnidades, new NodoUnidad(codigo, tipo));
+    totalUnidades++;
+    cout << "Unidad disponible\n";
+}
+ 
+// ================== 2. LISTA: cerrar emergencia y liberar unidad ==================
+void liberarUnidad() {
+    string codigo = leer("Codigo de la unidad: ");
+    NodoUnidad* u = buscar(listaAtencion, codigo);
+    if (u == NULL) {
+        cout << "Unidad no encontrada\n";
+        return;
+    }
+    quitar(listaAtencion, u);          // sale de listaAtencion
+    totalAtencion--;
+    insertarAlFinal(listaUnidades, u); // vuelve a listaUnidades
+    totalUnidades++;
+    cout << "Unidad liberada\n";
+}
+ 
+// ================== 3. PILA: registrar cambio de estado (apilar) ==================
+void registrarEstado() {
+    string estado = leer("Nuevo estado: ");
+    string fecha  = leer("Fecha: ");
+    if (totalEstados == 100) {
+        cout << "Historial lleno\n";
+        return;
+    }
+    NodoEstado* nuevo = new NodoEstado(estado, fecha);
+    nuevo->siguiente = tope;           // el nuevo apunta al que estaba arriba
+    tope = nuevo;                      // ahora el nuevo es el tope
+    totalEstados++;
+    cout << "Estado registrado\n";
+}
+ 
+// ================== 4. PILA: revertir ultimo estado (desapilar) ==================
+void revertirEstado() {
+    if (tope == NULL) {
+        cout << "No hay estados para revertir\n";
+        return;
+    }
+    cout << "Estado revertido: " << tope->estado << endl;
+    NodoEstado* borrar = tope;
+    tope = tope->siguiente;
+    delete borrar;
+    totalEstados--;
+    cout << "Se revirtio el estado\n";
+}
+ 
+// ================== 5. COLA: agregar emergencia (encolar) ==================
+void agregarEmergencia() {
+    string tipo      = leer("Tipo de emergencia: ");
+    string ubicacion = leer("Ubicacion: ");
+    if (totalCola == 5) {
+        cout << "Cola llena\n";
+        return;
+    }
+    NodoEmergencia* nuevo = new NodoEmergencia(tipo, ubicacion);
+    if (frente == NULL) frente = nuevo;        // cola vacia
+    else final->siguiente = nuevo;             // se une al final
+    final = nuevo;
+    totalCola++;
+    cout << "Emergencia en espera\n";
+}
+ 
+// ================== 6. COLA: asignar unidad a la siguiente emergencia (desencolar) ==================
+void asignarUnidad() {
+    if (frente == NULL) {
+        cout << "No hay emergencias\n";
+        return;
+    }
+    if (listaUnidades == NULL) {
+        cout << "No hay unidades disponibles\n";
+        return;
+    }
+    NodoEmergencia* e = frente;        // desencolar
+    frente = frente->siguiente;
+    if (frente == NULL) final = NULL;
+    totalCola--;
+ 
+    NodoUnidad* u = listaUnidades;     // la primera unidad libre
+    quitar(listaUnidades, u);
+    totalUnidades--;
+    insertarAlFinal(listaAtencion, u);
+    totalAtencion++;
+ 
+    cout << "Unidad asignada: " << u->codigo << " -> " << e->tipo
+         << " en " << e->ubicacion << endl;
+    delete e;
+}
+ 
+// ================== MENU ==================
+int main() {
+    string op;
+    do {
+        cout << "\n--- S.O.S. BOMBEROS ---\n"
+             << "1. Registrar unidad (lista)\n"
+             << "2. Liberar unidad (lista)\n"
+             << "3. Registrar estado (pila)\n"
+             << "4. Revertir estado (pila)\n"
+             << "5. Agregar emergencia (cola)\n"
+             << "6. Asignar unidad (cola)\n"
+             << "7. Ver resumen\n"
+             << "0. Salir\n";
+        op = leer("Opcion: ");
+ 
+        if      (op == "1") registrarUnidad();
+        else if (op == "2") liberarUnidad();
+        else if (op == "3") registrarEstado();
+        else if (op == "4") revertirEstado();
+        else if (op == "5") agregarEmergencia();
+        else if (op == "6") asignarUnidad();
+        else if (op == "7")
+            cout << "Unidades libres: " << totalUnidades
+                 << " | En atencion: " << totalAtencion
+                 << " | Emergencias en cola: " << totalCola
+                 << " | Estados en pila: " << totalEstados << endl;
+    } while (op != "0");
+ 
+    return 0;
+}
