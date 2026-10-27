@@ -2,7 +2,7 @@
 #include <string>
 using namespace std;
  
-// ================== NODOS (como en la PPT S09) ==================
+// ================== NODOS ==================
 struct NodoUnidad {                 // para listaUnidades y listaAtencion
     string codigo, tipo;
     NodoUnidad* siguiente;
