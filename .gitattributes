@@ -138,7 +138,7 @@ void agregarEmergencia() {
     totalCola++;
     cout << "Emergencia en espera\n";
 }
- 
+
 // ================== 6. COLA: asignar unidad a la siguiente emergencia (desencolar) ==================
 void asignarUnidad() {
     if (frente == NULL) {
