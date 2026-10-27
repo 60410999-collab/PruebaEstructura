@@ -41,7 +41,7 @@ NodoUnidad* buscar(NodoUnidad* lista, string codigo) {
         if (p->codigo == codigo) return p;
     return NULL;
 }
- 
+
 void insertarAlFinal(NodoUnidad*& lista, NodoUnidad* nodo) {
     nodo->siguiente = NULL;
     if (lista == NULL) {
@@ -93,7 +93,10 @@ void liberarUnidad() {
  
 // ================== 3. PILA: registrar cambio de estado (apilar) ==================
 void registrarEstado() {
-    string estado = leer("Nuevo estado: ");
+    
+     string estado = leer("Nuevo estado: ");
+ 
+
     string fecha  = leer("Fecha: ");
     if (totalEstados == 100) {
         cout << "Historial lleno\n";
@@ -141,6 +144,7 @@ void asignarUnidad() {
     if (frente == NULL) {
         cout << "No hay emergencias\n";
         return;
+    
     }
     if (listaUnidades == NULL) {
         cout << "No hay unidades disponibles\n";
