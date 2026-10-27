@@ -45,6 +45,55 @@ NodoUnidad* buscar(NodoUnidad* lista, string codigo) {
 void insertarAlFinal(NodoUnidad*& lista, NodoUnidad* nodo) {
     nodo->siguiente = NULL;
     if (lista == NULL) {
+        lista = nodo;
+    } else {
+        NodoUnidad* t = lista;
+        while (t->siguiente != NULL) t = t->siguiente;
+        t->siguiente = nodo;
+    }
+}
+ 
+void quitar(NodoUnidad*& lista, NodoUnidad* nodo) {
+    if (lista == nodo) {
+        lista = nodo->siguiente;
+    } else {
+        NodoUnidad* t = lista;
+        while (t->siguiente != nodo) t = t->siguiente;
+        t->siguiente = nodo->siguiente;
+    }
+}
+ 
+// ================== 1. LISTA: registrar unidad ==================
+void registrarUnidad() {
+    string codigo = leer("Codigo de la unidad: ");
+    string tipo   = leer("Tipo de unidad: ");
+    if (buscar(listaUnidades, codigo) != NULL) {
+        cout << "Unidad ya registrada\n";
+        return;
+    }
+    insertarAlFinal(listaUnidades, new NodoUnidad(codigo, tipo));
+    totalUnidades++;
+    cout << "Unidad disponible\n";
+}
+ 
+// ================== 2. LISTA: cerrar emergencia y liberar unidad ==================
+void liberarUnidad() {
+    string codigo = leer("Codigo de la unidad: ");
+    NodoUnidad* u = buscar(listaAtencion, codigo);
+    if (u == NULL) {
+        cout << "Unidad no encontrada\n";
+        return;
+    }
+    quitar(listaAtencion, u);          // sale de listaAtencion
+    totalAtencion--;
+    insertarAlFinal(listaUnidades, u); // vuelve a listaUnidades
+    totalUnidades++;
+    cout << "Unidad liberada\n";
+}
+ 
+// ================== 3. PILA: registrar cambio de estado (apilar) ==================
+void registrarEstado() {
+
      string estado = leer("Nuevo estado: ");
  
 
